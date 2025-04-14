@@ -156,3 +156,46 @@ for (indicator in indicators) {
 }
 
 #4
+library(rvest)
+
+url <- "https://www.afisha.ru/krasnodar/museum/"
+
+page <- read_html(url)
+
+museum_cards <- html_nodes(page, "._yjkz")
+
+names <- character()
+addresses <- character()
+full_urls <- character()
+descriptions <- character()
+
+for (card in museum_cards) {
+  name_node <- html_node(card, ".CjnHd.y8A5E.vVS2J")
+  name <- ifelse(!is.na(name_node), html_text(name_node, trim = TRUE), NA)
+  
+  address_node <- html_node(card, ".hmVRD.DiLyV")
+  address <- ifelse(!is.na(address_node), html_text(address_node, trim = TRUE), NA)
+  
+  link_node <- html_node(card, "a[href]")
+  href <- ifelse(!is.na(link_node), html_attr(link_node, "href"), NA)
+  full_url <- ifelse(!is.na(href), 
+                     ifelse(grepl("^https?://", href), href, paste0("https://www.afisha.ru", href)),
+                     NA)
+  
+  desc_node <- html_node(card, ".nLIEl .aEVDY div")
+  description <- ifelse(!is.na(desc_node), html_text(desc_node, trim = TRUE), NA)
+  
+  names <- c(names, name)
+  addresses <- c(addresses, address)
+  full_urls <- c(full_urls, full_url)
+  descriptions <- c(descriptions, description)
+}
+
+df <- data.frame(
+  Name = names,
+  Address = addresses,
+  URL = full_urls,
+  Description = descriptions,
+  stringsAsFactors = FALSE
+)
+
